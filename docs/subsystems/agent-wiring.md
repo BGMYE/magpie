@@ -30,6 +30,15 @@ something else shows up as drift.
 
 ## Runtime path
 
+On Windows, startup probes each local drive appearing in PATH once. A drive
+reported as an unrecognized volume or not ready is excluded from this
+process's PATH and from registry PATH fallback lookups (`proc.UserPath`,
+`proc.LoginPath`). Windows environment settings remain unchanged. This
+prevents repeated executable probes on an unavailable drive from blocking
+the initial agent list. Other volume errors remain unknown, and network
+paths are not volume-probed. Restart magpie after making a skipped drive
+available again (`internal/proc/path_volumes_windows.go`).
+
 1. **Connect.** The Agents page's switch calls `ConnectHow` (`POST /api/agents/{action}/{id}` in [`internal/gui/api.go`](../../internal/gui/api.go)). It stashes the current values (`<id>.connect.was`). It brings back the models used before a switch-off (`reconnect`), or calls `Join` where the agent keeps its own model (Codex signed in with ChatGPT). Otherwise it picks a model by the order `ConnectHow` documents and sets it through `Apply`.
 2. **Pick.** `Pick` sets a field from the model picker. Picking one of magpie's models on an agent that isn't connected connects it first.
 3. **Notice.** After a change the page shows `Notice` when the agent reads its config only at start-up and needs a restart. A field that is `Live` (`Field.Live`: magpie's own setting, which the gateway reads on each request, Claude Desktop's `subagent_model` and `subagent_effort`) needs no restart, so `POST /api/set` and `magpie <agent> <field> <value>` leave the Notice out after it, unless the pick connected the agent too (`Pick` on an agent not connected). A stopped WSL distro's copy of a field keeps the flag (`asleep`).

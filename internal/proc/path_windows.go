@@ -10,9 +10,11 @@ import (
 	"github.com/yetone/magpie/internal/appdir"
 )
 
-// UserPath has nothing to do on Windows: an app started from the Start menu
-// gets the user's PATH from the registry, as a terminal does.
-func UserPath() {}
+// UserPath excludes unavailable volumes from this process's command search.
+// The registry is unchanged.
+func UserPath() {
+	os.Setenv("PATH", strings.Join(availablePathDirs(filepath.SplitList(os.Getenv("PATH"))), ";"))
+}
 
 // UserBinDirs are the folders a user's command-line tools are installed in
 // that exist here — npm's global one, bun's, volta's, pnpm's, mise's
@@ -49,6 +51,10 @@ func UserBinDirs() []string {
 // user's: what a terminal opened now gets, and what a magpie started
 // before a CLI was installed doesn't.
 func LoginPath() []string {
+	return availablePathDirs(loginPath())
+}
+
+func loginPath() []string {
 	var dirs []string
 	for _, k := range []struct {
 		root registry.Key

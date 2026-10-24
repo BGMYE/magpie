@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"runtime"
 	"slices"
 	"strings"
 	"time"
@@ -187,6 +188,9 @@ func Main(v string) {
 	endProbesOnSignal()
 	gateway.Version = version
 	netproxy.Install()
+	if runtime.GOOS == "windows" {
+		proc.UserPath()
+	}
 	update.GUI = hasGUI
 	err = run(os.Args[1:])
 	proc.EndProbes() // a CLI still being asked something isn't left to init
